@@ -1,0 +1,206 @@
+Key Components:
+Top Section (User Interaction - Real-time Query Flow):
+
+IAM Admin/User → Asks questions about IAM products
+Web Interface (React/Streamlit) → Chat UI
+API Gateway → Authentication via Cognito/Okta SSO
+Lambda RAG Engine → Core orchestration logic:
+
+Converts query to embeddings
+Searches vector database
+Builds context
+Calls Claude Haiku
+
+
+Bedrock Titan Embeddings → Converts text to vectors
+Vector Database → Stores and retrieves similar chunks
+Claude 3.5 Haiku → Generates final answer (cost-effective!)
+
+Bottom Section (Ingestion Pipeline - One-time Setup):
+
+S3 Bucket → Stores all IAM PDFs (Okta, SailPoint, SiteMinder, Viper)
+Event Trigger → Fires when new PDF uploaded
+Lambda PDF Processor → Extracts text and chunks it
+Text Chunks → With metadata tags for filtering
+Bedrock Titan → Creates embeddings for each chunk
+Vector DB → Stores embeddings for future search
+
+Special Features:
+
+Cost Info Box (top right) → Shows pricing estimates
+Metadata Tags → Shows how products are filtered
+Color Coding → Orange for AWS/Bedrock, Blue for databases, Purple for processing
+Legend → Explains arrow types and components
+
+To use in PowerPoint: Right-click → Save or Copy the image!
+Would you like me to:
+
+Add more technical details?
+Create a simplified version?
+Add specific AWS region information?
+Include security layers (WAF, VPC)?
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+IAM Knowledge Base Chatbot Implementation Guide
+Architecture Overview
+You're building a Retrieval-Augmented Generation (RAG) chatbot that combines:
+
+Your IAM documentation (Okta, SiteMinder, SailPoint, Viper PDFs)
+AWS Bedrock's Claude Haiku (cost-effective LLM)
+Vector database for semantic search
+
+Step-by-Step Implementation
+Phase 1: Document Ingestion Pipeline
+1.1 Set Up S3 Storage
+- Create S3 bucket: iam-knowledge-base-docs
+- Organize folders: /okta, /sailpoint, /siteminder, /viper
+- Upload all PDF documents
+
+1.2 PDF Processing Lambda
+This Lambda triggers when PDFs are uploaded to S3:
+python# Key functions:
+- Extract text from PDFs (use PyPDF2 or textract)
+- Split documents into chunks (500-1000 tokens each)
+- Maintain metadata: {product: "okta", doc_name: "admin_guide.pdf", page: 5}
+- Overlap chunks by 10-20% for context continuity
+```
+
+**1.3 Generate Embeddings**
+- Use **Amazon Bedrock Titan Embeddings** (cheapest option: ~$0.0001 per 1K tokens)
+- Convert each text chunk into a vector (1536 dimensions)
+- Embeddings capture semantic meaning for similarity search
+
+**1.4 Store in Vector Database**
+
+**Options:**
+- **OpenSearch Serverless** - Best for production, fully managed
+- **DynamoDB + FAISS** - Most cost-effective for small/medium datasets
+- **Pinecone/Weaviate** - Third-party options
+
+Store: `{chunk_text, embedding_vector, metadata}`
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#### **Phase 2: Query Processing (RAG Engine)**
+
+**2.1 User Query Flow**
+```
+User: "How do I reset password in Okta?"
+    ↓
+API Gateway (with Cognito/Okta SSO authentication)
+    ↓
+Lambda RAG Orchestrator
+
+2.2 RAG Lambda Logic
+pythondef handle_query(user_question):
+    # Step 1: Convert query to embedding
+    query_embedding = bedrock_titan.embed(user_question)
+    
+    # Step 2: Vector similarity search
+    relevant_chunks = vector_db.search(
+        query_embedding, 
+        top_k=5,  # Get top 5 most relevant chunks
+        filter={"product": "okta"}  # Optional: filter by product
+    )
+    
+    # Step 3: Build context
+    context = "\n\n".join([chunk.text for chunk in relevant_chunks])
+    
+    # Step 4: Create prompt for Claude
+    prompt = f"""You are an IAM expert assistant. Answer based on this context:
+    
+    Context: {context}
+    
+    Question: {user_question}
+    
+    Answer accurately and cite which product (Okta/SailPoint/SiteMinder/Viper) the info comes from."""
+    
+    # Step 5: Call Claude Haiku
+    response = bedrock_claude_haiku.invoke(
+        model_id="anthropic.claude-haiku-3-5-20241022",
+        prompt=prompt,
+        max_tokens=1000
+    )
+    
+    return response
+```
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+2.2 RAG Lambda Logic
+pythondef handle_query(user_question):
+    # Step 1: Convert query to embedding
+    query_embedding = bedrock_titan.embed(user_question)
+    
+    # Step 2: Vector similarity search
+    relevant_chunks = vector_db.search(
+        query_embedding, 
+        top_k=5,  # Get top 5 most relevant chunks
+        filter={"product": "okta"}  # Optional: filter by product
+    )
+    
+    # Step 3: Build context
+    context = "\n\n".join([chunk.text for chunk in relevant_chunks])
+    
+    # Step 4: Create prompt for Claude
+    prompt = f"""You are an IAM expert assistant. Answer based on this context:
+    
+    Context: {context}
+    
+    Question: {user_question}
+    
+    Answer accurately and cite which product (Okta/SailPoint/SiteMinder/Viper) the info comes from."""
+    
+    # Step 5: Call Claude Haiku
+    response = bedrock_claude_haiku.invoke(
+        model_id="anthropic.claude-haiku-3-5-20241022",
+        prompt=prompt,
+        max_tokens=1000
+    )
+    
+    return response
+```
+3.2 Cost Breakdown (Claude Haiku)
+
+Input tokens: $0.80 per million tokens
+Output tokens: $4.00 per million tokens
+Example: 100K queries/month ≈ $50-100/month
+
+==========================================================
+
+Phase 5: Optimization Tips
+5.1 Improve Accuracy
+
+Chunk size: Test 500-1000 tokens
+Overlap: 10-20% between chunks
+Metadata filtering: Let users select specific products
+Prompt engineering: Include examples of good answers
+
+5.2 Reduce Costs
+
+Cache frequent queries (DynamoDB/ElastiCache)
+Use Claude Haiku (10x cheaper than Sonnet)
+Implement rate limiting
+Return fewer chunks (3-5 instead of 10)
+
+Security:
+
+Enable S3 encryption
+Use VPC endpoints for Bedrock
+Implement API authentication (Cognito/Okta)
+Add rate limiting & input validation
+
+
+Quick Start Steps
+
+Week 1: Set up S3, upload PDFs, create ingestion Lambda
+Week 2: Implement embeddings pipeline with Titan, populate vector DB
+Week 3: Build RAG Lambda with Claude Haiku integration
+Week 4: Create UI, test with real queries, optimize
+
+Testing Your Chatbot
+Sample questions to test:
+
+"How do I configure SSO in Okta?"
+"What are the password policies in SailPoint?"
+"Compare authentication methods in SiteMinder vs Okta"
+"Show me troubleshooting steps for Viper login issues"
+
