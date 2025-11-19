@@ -209,3 +209,80 @@ Sample questions to test:
 "Compare authentication methods in SiteMinder vs Okta"
 "Show me troubleshooting steps for Viper login issues"
 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+🎯 Complete Flow Components:
+Main Request Flow:
+
+START - User types IAM question
+Route 53 - DNS resolution with domain details
+CloudFront CDN - Edge caching, SSL termination, path routing
+Decision Point - Static content OR API call?
+
+Left Path: S3 Static Website → Serve React app
+Right Path: Continue to API Gateway
+
+
+
+API Processing Flow:
+
+API Gateway - REST endpoint, validation, throttling
+Authentication - Cognito/Okta JWT validation
+Decision Point - Token valid?
+
+NO: 401 Unauthorized error
+YES: Continue to Lambda
+
+
+
+RAG Engine (4 Steps):
+
+Lambda RAG Orchestrator - Main processing logic
+RAG Step 1 - Create embedding (Bedrock Titan)
+RAG Step 2 - Vector search (OpenSearch k-NN)
+RAG Step 3 - Build context from top 5 chunks
+RAG Step 4 - Call Claude 3.5 Haiku for answer
+
+Response Flow:
+
+Format Response - JSON with answer + citations
+Return Path - Back through API Gateway → CloudFront
+END - Display answer to user
+
+📋 Key Features:
+✅ Numbered arrows (①-⑮) showing exact flow sequence
+✅ Color-coded paths:
+
+Black: Main flow
+Green: Success/return paths
+Red: Error paths
+Blue: API requests
+Orange: RAG processing
+
+✅ Detailed component boxes with:
+
+Service names and functions
+Technical specifications
+API parameters
+Latency metrics
+Cost information
+
+✅ Decision diamonds showing:
+
+Static vs API routing
+Authentication validation
+
+✅ Detail boxes (on right side) showing:
+
+Example queries
+Configuration parameters
+API costs
+Response formats
+
+✅ Performance metrics at bottom showing end-to-end timing
+✅ Legend explaining all arrow types and symbols
+This flowchart is presentation-ready and shows every component with clear technical details! Would you like me to adjust anything or create an additional simplified version?RetryClaude can make mistakes. Please double-check responses.
