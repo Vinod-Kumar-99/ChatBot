@@ -286,3 +286,85 @@ Response formats
 ✅ Performance metrics at bottom showing end-to-end timing
 ✅ Legend explaining all arrow types and symbols
 This flowchart is presentation-ready and shows every component with clear technical details! Would you like me to adjust anything or create an additional simplified version?RetryClaude can make mistakes. Please double-check responses.
+
+
+Slide 1: Title Slide
+
+IAM Chatbot Architecture – Using AWS Bedrock Agent
+
+Subtitle: High-level Architecture & Workflow Overview
+
+
+---
+
+Slide 2: Architecture Components
+
+Key Components Used
+
+User Interface: Web or application used to send queries.
+
+Route 53: Handles domain routing and DNS resolution.
+
+CloudFront: Delivers static UI quickly with caching & CDN.
+
+S3 Static Bucket: Stores and serves the chatbot's frontend interface.
+
+API Gateway: Exposes secure APIs for chatbot interactions.
+
+AWS Lambda: Orchestrates logic and integrates with Bedrock Agent.
+
+AWS Bedrock Agent: Processes natural language queries and performs reasoning.
+
+S3 Document Store: Knowledge base storing PDFs/domains used for retrieval.
+
+
+
+---
+
+Slide 3: End-to-End Workflow
+
+How the Chatbot Works
+
+1. The user interacts with the chatbot UI hosted on S3.
+
+
+2. Route 53 routes the request to CloudFront.
+
+
+3. CloudFront serves the UI and forwards backend API requests.
+
+
+4. API Gateway receives the chatbot query.
+
+
+5. Lambda is triggered to process the request.
+
+
+6. Lambda invokes the AWS Bedrock Agent for reasoning.
+
+
+7. The agent retrieves relevant content from S3 knowledge base using RAG.
+
+
+8. The response flows back: Bedrock Agent → Lambda → API Gateway → User.
+
+
+
+
+---
+
+Slide 4: Why Use AWS Bedrock Agent?
+
+Benefits of Using Bedrock Agent
+
+Supports multi-step reasoning and accurate responses.
+
+Easily integrates with S3 documents for knowledge retrieval.
+
+Supports function calling to trigger custom Lambda actions.
+
+Highly scalable, secure, and managed by AWS.
+
+Reduces development effort with built-in orchestration capabilities.
+
+
